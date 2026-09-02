@@ -33,3 +33,13 @@ export function validatePassword(password) {
   }
   return { valid: true };
 }
+
+export function validateAdminUserBody({ name, email, password, address, role }) {
+  const checks = [validateName(name), validateEmail(email), validatePassword(password), validateAddress(address)];
+  const failed = checks.find((c) => !c.valid);
+  if (failed) return failed;
+  if (!['ADMIN', 'NORMAL', 'OWNER'].includes(role)) {
+    return { valid: false, error: 'Role must be ADMIN, NORMAL, or OWNER.' };
+  }
+  return { valid: true };
+}

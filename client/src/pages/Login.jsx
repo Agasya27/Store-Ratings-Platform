@@ -8,6 +8,7 @@ import Input from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { getApiError } from '../utils/apiError';
 import { validateEmail } from '../utils/validators';
+import { getHomePath } from '../utils/routes';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -32,8 +33,8 @@ export default function Login() {
     setSubmitting(true);
     setError('');
     try {
-      await login(email, password);
-      navigate('/');
+      const loggedInUser = await login(email, password);
+      navigate(getHomePath(loggedInUser.role));
     } catch (err) {
       setError(getApiError(err));
     } finally {

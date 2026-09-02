@@ -59,6 +59,43 @@ function validateChangePasswordBody({ currentPassword, newPassword }) {
   return validatePassword(newPassword);
 }
 
+function validateStoreName(name) {
+  if (typeof name !== 'string' || name.trim().length < 1 || name.length > 255) {
+    return { valid: false, error: 'Store name is required and must be at most 255 characters.' };
+  }
+  return { valid: true };
+}
+
+function validateStoreBody({ name, email, address }) {
+  const checks = [validateStoreName(name), validateAddress(address)];
+  if (email) checks.splice(1, 0, validateEmail(email));
+  const failed = checks.find((c) => !c.valid);
+  return failed || { valid: true };
+}
+
+function validateAdminUserBody({ name, email, password, address, role }) {
+  const checks = [
+    validateName(name),
+    validateEmail(email),
+    validatePassword(password),
+    validateAddress(address),
+  ];
+  const failed = checks.find((c) => !c.valid);
+  if (failed) return failed;
+  if (!['ADMIN', 'NORMAL', 'OWNER'].includes(role)) {
+    return { valid: false, error: 'Role must be ADMIN, NORMAL, or OWNER.' };
+  }
+  return { valid: true };
+}
+
+function validateRatingValue(value) {
+  const num = Number(value);
+  if (!Number.isInteger(num) || num < 1 || num > 5) {
+    return { valid: false, error: 'Rating must be an integer between 1 and 5.' };
+  }
+  return { valid: true };
+}
+
 module.exports = {
   validateName,
   validateEmail,
@@ -67,4 +104,8 @@ module.exports = {
   validateSignupBody,
   validateLoginBody,
   validateChangePasswordBody,
+  validateStoreName,
+  validateStoreBody,
+  validateAdminUserBody,
+  validateRatingValue,
 };
