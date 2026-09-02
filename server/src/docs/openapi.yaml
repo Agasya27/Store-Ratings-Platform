@@ -1,0 +1,232 @@
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Admin
+    description: System administrator endpoints
+  - name: Stores
+    description: Store browsing for normal users
+  - name: Ratings
+    description: Rating submit and edit
+
+paths:
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a normal user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, minLength: 20, maxLength: 60 }
+                email: { type: string, format: email }
+                password: { type: string }
+                address: { type: string }
+      responses:
+        '201': { description: User created with JWT token }
+        '400': { description: Validation error }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login for all roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: JWT token and user profile }
+        '401': { description: Invalid credentials }
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current session
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Logged out }
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Current user }
+
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string }
+      responses:
+        '200': { description: Password updated }
+
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Platform stats
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Counts of users, stores, ratings
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List users with filter and sort
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: name, in: query, schema: { type: string } }
+        - { name: email, in: query, schema: { type: string } }
+        - { name: address, in: query, schema: { type: string } }
+        - { name: role, in: query, schema: { type: string, enum: [ADMIN, NORMAL, OWNER] } }
+        - { name: sortBy, in: query, schema: { type: string, enum: [name, email, address, role, created_at] } }
+        - { name: sortOrder, in: query, schema: { type: string, enum: [asc, desc] } }
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: Paginated user list }
+    post:
+      tags: [Admin]
+      summary: Create admin or normal user
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+                address: { type: string }
+                role: { type: string, enum: [ADMIN, NORMAL, OWNER] }
+      responses:
+        '201': { description: User created }
+
+  /api/admin/users/{id}:
+    get:
+      tags: [Admin]
+      summary: User detail (includes store rating if OWNER)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: User detail }
+        '404': { description: Not found }
+
+  /api/admin/stores:
+    get:
+      tags: [Admin]
+      summary: List stores with filter, sort, and average rating
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: name, in: query, schema: { type: string } }
+        - { name: email, in: query, schema: { type: string } }
+        - { name: address, in: query, schema: { type: string } }
+        - { name: sortBy, in: query, schema: { type: string, enum: [name, email, address, average_rating, created_at] } }
+        - { name: sortOrder, in: query, schema: { type: string, enum: [asc, desc] } }
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: Paginated store list }
+    post:
+      tags: [Admin]
+      summary: Create a store
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                address: { type: string }
+                ownerId: { type: integer }
+      responses:
+        '201': { description: Store created }
+
+  /api/stores:
+    get:
+      tags: [Stores]
+      summary: Browse and search stores
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: name, in: query, schema: { type: string } }
+        - { name: address, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: Stores with average and user rating }
+
+  /api/stores/{id}:
+    get:
+      tags: [Stores]
+      summary: Get single store with ratings
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: Store detail }
+
+  /api/ratings:
+    post:
+      tags: [Ratings]
+      summary: Submit a rating (upsert)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId, value]
+              properties:
+                storeId: { type: integer }
+                value: { type: integer, minimum: 1, maximum: 5 }
+      responses:
+        '201': { description: Rating saved }
+
+  /api/ratings/{storeId}:
+    put:
+      tags: [Ratings]
+      summary: Edit existing rating for a store
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value: { type: integer, minimum: 1, maximum: 5 }
+      responses:
+        '200': { description: Rating updated }
