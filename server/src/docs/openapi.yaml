@@ -7,6 +7,8 @@ tags:
     description: Store browsing for normal users
   - name: Ratings
     description: Rating submit and edit
+  - name: Owner
+    description: Store owner dashboard endpoints
 
 paths:
   /api/auth/signup:
@@ -230,3 +232,14 @@ paths:
                 value: { type: integer, minimum: 1, maximum: 5 }
       responses:
         '200': { description: Rating updated }
+
+  /api/owner/dashboard:
+    get:
+      tags: [Owner]
+      summary: Owner dashboard with store average rating and raters
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Owned store summary and list of users who rated it
+        '403':
+          description: Requires OWNER role

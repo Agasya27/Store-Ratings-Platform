@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import StoreBrowse from './pages/user/StoreBrowse';
+import OwnerDashboard from './pages/owner/Dashboard';
 import { getHomePath } from './utils/routes';
 
 function HomeRedirect() {
@@ -72,6 +73,15 @@ export default function App() {
             element={
               <RoleRoute roles={['NORMAL']}>
                 <StoreBrowse />
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/owner/dashboard"
+            element={
+              <RoleRoute roles={['OWNER']}>
+                <OwnerDashboard />
               </RoleRoute>
             }
           />
