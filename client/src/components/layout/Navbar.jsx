@@ -46,6 +46,12 @@ export default function Navbar() {
             </Link>
           )}
 
+          {isAuthenticated && user.role === 'OWNER' && (
+            <Link to="/owner/dashboard" className={cn(linkClass, 'text-muted hover:bg-slate-100 hover:text-foreground')}>
+              My store
+            </Link>
+          )}
+
           {isAuthenticated && (
             <>
               <Link to="/account" className={cn(linkClass, 'text-muted hover:bg-slate-100 hover:text-foreground')}>

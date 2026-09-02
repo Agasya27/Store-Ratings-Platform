@@ -5,7 +5,7 @@ export function getHomePath(role) {
     case 'NORMAL':
       return '/stores';
     case 'OWNER':
-      return '/account';
+      return '/owner/dashboard';
     default:
       return '/account';
   }
