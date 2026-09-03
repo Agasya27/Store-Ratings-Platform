@@ -1,42 +1,42 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
-import Alert from '../components/ui/Alert';
+import Banner from '../components/ui/Banner';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
+import PasswordInput from '../components/ui/PasswordInput';
+import { useValidatedField } from '../hooks/useValidatedFields';
 import { useAuth } from '../context/AuthContext';
 import { getApiError } from '../utils/apiError';
 import { validateEmail } from '../utils/validators';
 import { getHomePath } from '../utils/routes';
 
+function validateRequired(value) {
+  return value ? { valid: true } : { valid: false, error: 'Password is required.' };
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const emailField = useValidatedField('', validateEmail);
+  const passwordField = useValidatedField('', validateRequired);
+  const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const emailCheck = validateEmail(email);
-    if (!emailCheck.valid) {
-      setError(emailCheck.error);
-      return;
-    }
-    if (!password) {
-      setError('Password is required.');
-      return;
-    }
+    const emailOk = emailField.validate();
+    const passwordOk = passwordField.validate();
+    if (!emailOk || !passwordOk) return;
 
     setSubmitting(true);
-    setError('');
+    setSubmitError('');
     try {
-      const loggedInUser = await login(email, password);
+      const loggedInUser = await login(emailField.value, passwordField.value);
       navigate(getHomePath(loggedInUser.role));
     } catch (err) {
-      setError(getApiError(err));
+      setSubmitError(getApiError(err));
     } finally {
       setSubmitting(false);
     }
@@ -56,28 +56,31 @@ export default function Login() {
       }
     >
       <Card>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
           <Input
             label="Email"
             name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={emailField.value}
+            onChange={(e) => emailField.change(e.target.value)}
+            onBlur={emailField.blur}
+            error={emailField.error}
             autoComplete="email"
             placeholder="you@example.com"
           />
-          <Input
+          <PasswordInput
             label="Password"
             name="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={passwordField.value}
+            onChange={(e) => passwordField.change(e.target.value)}
+            onBlur={passwordField.blur}
+            error={passwordField.error}
             autoComplete="current-password"
             placeholder="Enter your password"
           />
-          {error && <Alert>{error}</Alert>}
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? 'Signing in...' : 'Sign in'}
+          {submitError && <Banner variant="error">{submitError}</Banner>}
+          <Button type="submit" className="w-full" loading={submitting} disabled={submitting}>
+            Sign in
           </Button>
         </form>
       </Card>

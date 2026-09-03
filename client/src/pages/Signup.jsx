@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
-import Alert from '../components/ui/Alert';
+import Banner from '../components/ui/Banner';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
+import PasswordInput from '../components/ui/PasswordInput';
+import { useValidatedFields } from '../hooks/useValidatedFields';
 import { useAuth } from '../context/AuthContext';
 import { getApiError } from '../utils/apiError';
 import { validateAddress, validateEmail, validateName, validatePassword } from '../utils/validators';
@@ -13,35 +15,29 @@ import { getHomePath } from '../utils/routes';
 export default function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
-  const [form, setForm] = useState({ name: '', email: '', password: '', address: '' });
-  const [error, setError] = useState('');
+  const { values, errors, setField, blurField, validateAll } = useValidatedFields(
+    { name: '', email: '', password: '', address: '' },
+    {
+      name: validateName,
+      email: validateEmail,
+      password: validatePassword,
+      address: validateAddress,
+    }
+  );
+  const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  function updateField(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const checks = [
-      validateName(form.name),
-      validateEmail(form.email),
-      validatePassword(form.password),
-      validateAddress(form.address),
-    ];
-    const failed = checks.find((c) => !c.valid);
-    if (failed) {
-      setError(failed.error);
-      return;
-    }
+    if (!validateAll()) return;
 
     setSubmitting(true);
-    setError('');
+    setSubmitError('');
     try {
-      const newUser = await signup(form);
+      const newUser = await signup(values);
       navigate(getHomePath(newUser.role));
     } catch (err) {
-      setError(getApiError(err));
+      setSubmitError(getApiError(err));
     } finally {
       setSubmitting(false);
     }
@@ -61,12 +57,14 @@ export default function Signup() {
       }
     >
       <Card>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
           <Input
             label="Full name"
             name="name"
-            value={form.name}
-            onChange={(e) => updateField('name', e.target.value)}
+            value={values.name}
+            onChange={(e) => setField('name', e.target.value)}
+            onBlur={() => blurField('name')}
+            error={errors.name}
             hint="Must be 20-60 characters"
             placeholder="Your full display name"
           />
@@ -74,16 +72,19 @@ export default function Signup() {
             label="Email"
             name="email"
             type="email"
-            value={form.email}
-            onChange={(e) => updateField('email', e.target.value)}
+            value={values.email}
+            onChange={(e) => setField('email', e.target.value)}
+            onBlur={() => blurField('email')}
+            error={errors.email}
             placeholder="you@example.com"
           />
-          <Input
+          <PasswordInput
             label="Password"
             name="password"
-            type="password"
-            value={form.password}
-            onChange={(e) => updateField('password', e.target.value)}
+            value={values.password}
+            onChange={(e) => setField('password', e.target.value)}
+            onBlur={() => blurField('password')}
+            error={errors.password}
             autoComplete="new-password"
             hint="8-16 chars, one uppercase, one special character"
             placeholder="Create a strong password"
@@ -91,14 +92,16 @@ export default function Signup() {
           <Input
             label="Address"
             name="address"
-            value={form.address}
-            onChange={(e) => updateField('address', e.target.value)}
+            value={values.address}
+            onChange={(e) => setField('address', e.target.value)}
+            onBlur={() => blurField('address')}
+            error={errors.address}
             hint="Optional, max 400 characters"
             placeholder="Street, city, country"
           />
-          {error && <Alert>{error}</Alert>}
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? 'Creating account...' : 'Create account'}
+          {submitError && <Banner variant="error">{submitError}</Banner>}
+          <Button type="submit" className="w-full" loading={submitting} disabled={submitting}>
+            Create account
           </Button>
         </form>
       </Card>

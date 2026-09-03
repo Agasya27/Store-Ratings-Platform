@@ -61,6 +61,8 @@ async function listUsers(filters = {}, sortOptions = {}, pagination = {}) {
   if (filters.role) {
     params.push(filters.role);
     conditions.push(`role = $${params.length}`);
+  } else {
+    conditions.push(`role IN ('NORMAL', 'ADMIN')`);
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

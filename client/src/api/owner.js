@@ -1,5 +1,5 @@
 import client from './client';
 
-export function getOwnerDashboard() {
-  return client.get('/owner/dashboard');
+export function getOwnerDashboard(params) {
+  return client.get('/owner/dashboard', { params });
 }

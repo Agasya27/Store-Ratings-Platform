@@ -1,100 +1,111 @@
-```markdown
-# Store Rating Platform
+# Store Ratings Platform
 
-A full-stack web application where users can discover stores and submit ratings
-(1–5) for them. Built for the FullStack Intern coding challenge.
+A full-stack app for the FullStack Intern coding challenge. Users can browse registered stores and leave ratings from 1 to 5. Everyone signs in through the same login page — what you can do after that depends on your role (admin, normal user, or store owner).
 
-## Tech Stack
+I built the backend with Express and PostgreSQL (plain SQL, no ORM), and the frontend with React and Vite.
 
-| Layer     | Technology                     |
-|-----------|---------------------------------|
-| Frontend  | React (Vite)                    |
-| Backend   | Node.js + Express               |
-| Database  | PostgreSQL                      |
-| Auth      | JWT (JSON Web Tokens) + bcrypt  |
+## What's in here
 
-## User Roles
+**Admin** — dashboard with user/store/rating counts, create users and stores, filter and sort listings, view individual user profiles (including store rating for owners).
 
-- **System Administrator** — manages users and stores, views platform-wide stats.
-- **Normal User** — signs up, browses/searches stores, submits or edits ratings.
-- **Store Owner** — views who rated their store and their average rating.
+**Normal user** — sign up, search stores by name or address, submit or update a star rating.
 
-## Project Structure
+**Store owner** — see who rated their store and the average score.
+
+Auth is JWT-based. The API checks roles on every protected route, and the React app does the same on the client so you can't stumble into the wrong dashboard by URL alone.
+
+## Tech stack
+
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Node.js, Express
+- **Database:** PostgreSQL
+- **Auth:** JWT + bcrypt
+- **API docs:** Swagger at `/api/docs` when the server is running
+
+## Project layout
 
 ```
-store-rating-app/
-├── server/                 # Express + PostgreSQL API
-│   ├── migrations/
-│   │   ├── schema.sql      # Database schema (users, stores, ratings)
-│   │   └── run.js          # Migration runner (npm run migrate)
-│   ├── src/
-│   │   ├── config/db.js    # PostgreSQL connection pool
-│   │   ├── models/         # Plain SQL data-access functions
-│   │   ├── middleware/     # auth (JWT) + role guards
-│   │   ├── controllers/    # request handlers / business logic
-│   │   ├── routes/         # Express routers, grouped by resource
-│   │   ├── utils/          # validators, token helpers
-│   │   ├── app.js          # Express app (middleware + routes)
-│   │   └── server.js       # entry point
-│   ├── .env.example
-│   └── package.json
-│
-└── client/                 # React frontend
-    ├── src/
-    │   ├── api/             # axios instance + API calls
-    │   ├── context/         # AuthContext (current user, token)
-    │   ├── components/      # shared UI (tables, forms, navbar)
-    │   ├── pages/           # route-level pages per role
-    │   └── utils/           # form validators
-    └── package.json
+Store-Ratings-Platform/
+├── server/          Express API, migrations, seed script
+├── client/          React app
+├── README.md        (you are here)
+└── EXPLANATION.md   deeper walkthrough for reviewers / interviews
 ```
 
-## Getting Started
+Inside `server/src/` you'll find the usual split: `routes`, `controllers`, `models` (SQL queries), `middleware` (auth + errors), and `utils` (validators, JWT helpers). The client mirrors that with `api/`, `pages/` per role, shared `components/`, and `context/` for auth state.
 
-### 1. Database
-\`\`\`bash
+## Setup
+
+You'll need Node 18+, PostgreSQL, and two terminal windows (one for the API, one for the UI).
+
+### Database
+
+```bash
 createdb store_ratings
-psql -d store_ratings -f server/migrations/schema.sql
-# or: cd server && npm run migrate
-\`\`\`
-
-### 2. Backend
-\`\`\`bash
 cd server
-cp .env.example .env   # fill in your DB credentials + JWT secret
+cp .env.example .env
 npm install
-npm run dev             # http://localhost:5000
-\`\`\`
+npm run migrate
+npm run seed
+```
 
-### 3. Frontend
-\`\`\`bash
+Edit `server/.env` before you start the server:
+
+- **`DATABASE_URL`** — connection string for your local Postgres. On macOS with Homebrew, the default user is often your Mac username, not `postgres`. Example: `postgresql://yourname@localhost:5432/store_ratings`
+- **`JWT_SECRET`** — any long random string
+- **`PORT`** — I use `5003` locally because port 5000 clashes with AirPlay on Mac. The Vite dev server proxies API calls to whatever port you set here, so keep `PORT` in `.env` aligned with `client/vite.config.js` (currently `5003`).
+
+### Backend
+
+```bash
+cd server
+npm run dev
+```
+
+Health check: `http://localhost:5003/health` should return `{"status":"ok","database":"connected"}`.
+
+Swagger UI: `http://localhost:5003/api/docs` — handy for trying endpoints without the UI. Log in first, copy the token, click Authorize, and paste `Bearer <token>`.
+
+### Frontend
+
+```bash
 cd client
 npm install
-npm run dev              # http://localhost:5173
-\`\`\`
-
-## Validation Rules
-
-| Field    | Rule                                                            |
-|----------|------------------------------------------------------------------|
-| Name     | 20–60 characters                                                  |
-| Address  | Max 400 characters                                                |
-| Password | 8–16 characters, at least one uppercase letter and one special char |
-| Email    | Standard email format                                             |
-
-## Core Features
-
-- Single login for all roles, with role-based access on both API and UI.
-- Admin dashboard: total users, total stores, total ratings.
-- Admin can add users/stores, list + filter (name/email/address/role) + sort.
-- Normal users can sign up, search stores, submit/update a 1–5 rating.
-- Store owners can see their raters and average rating.
-- Sortable tables (ascending/descending) on all listings.
-
-## Development Workflow
-
-This repo follows a simple branch-per-phase workflow: each feature is built on
-its own branch and merged into `main` via a pull request once complete. See
-`EXPLANATION.md` for a breakdown of every file, function, and the reasoning
-behind key decisions.
+npm run dev
 ```
+
+Open **http://localhost:5173**. The app proxies `/api` to the backend, so you don't need to configure a separate API URL in the browser.
+
+## Test login (seeded admin)
+
+After `npm run seed`:
+
+| | |
+|---|---|
+| Email | `admin@storeratings.com` |
+| Password | `Admin@12345` |
+
+Run `npm run seed` again anytime to reset that account.
+
+To exercise the full flow: log in as admin → create an owner user → create a store with that user's ID as `ownerId` → sign up as a normal user → rate the store → log in as the owner and check the dashboard.
+
+## Validation (enforced on API and forms)
+
+Names must be 20–60 characters. Addresses cap at 400 characters. Passwords are 8–16 characters with at least one uppercase letter and one special character. Email must be a valid format. Ratings are integers from 1 to 5.
+
+## Development notes
+
+Work landed in feature branches (`feature/db-schema`, `feature/auth`, `feature/admin-stores`, `feature/owner-frontend`, `feature/final-ui-polish`) and was merged via pull requests.
+
+For a file-by-file explanation of how auth, roles, and the database fit together, see [EXPLANATION.md](EXPLANATION.md).
+
+Formatting uses Prettier with the root `.prettierrc`:
+
+```bash
+cd server && npm run format
+cd client && npm run format
+```
+
+## Deploying to Railway
+
+Backend and frontend are meant to run as **two Railway services** plus a **PostgreSQL** database. See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step setup (root directories, env vars, CORS, and `VITE_API_URL`).

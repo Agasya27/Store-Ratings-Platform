@@ -1,4 +1,7 @@
 const { query } = require('../config/db');
+const { parseSort } = require('../utils/queryHelpers');
+
+const RATER_SORT_COLUMNS = ['name', 'email', 'rating', 'created_at'];
 
 async function getOwnedStoreSummary(ownerId) {
   const result = await query(
@@ -14,14 +17,23 @@ async function getOwnedStoreSummary(ownerId) {
   return result.rows[0] || null;
 }
 
-async function getRatersForOwner(ownerId) {
+async function getRatersForOwner(ownerId, sortOptions = {}) {
+  const { column, order } = parseSort(
+    sortOptions.sortBy,
+    sortOptions.sortOrder,
+    RATER_SORT_COLUMNS,
+    'created_at'
+  );
+  const sortColumn =
+    column === 'name' || column === 'email' ? `u.${column}` : column === 'rating' ? 'r.value' : 'r.created_at';
+
   const result = await query(
     `SELECT u.id, u.name, u.email, r.value AS rating, r.created_at, r.updated_at
      FROM ratings r
      JOIN users u ON u.id = r.user_id
      JOIN stores s ON s.id = r.store_id
      WHERE s.owner_id = $1
-     ORDER BY r.created_at DESC`,
+     ORDER BY ${sortColumn} ${order}`,
     [ownerId]
   );
   return result.rows;

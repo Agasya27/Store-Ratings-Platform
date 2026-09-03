@@ -43,3 +43,17 @@ export function validateAdminUserBody({ name, email, password, address, role }) 
   }
   return { valid: true };
 }
+
+export function validateStoreName(name) {
+  if (typeof name !== 'string' || name.trim().length < 1 || name.length > 255) {
+    return { valid: false, error: 'Store name is required and must be at most 255 characters.' };
+  }
+  return { valid: true };
+}
+
+export function validateStoreBody({ name, email, address }) {
+  const checks = [validateStoreName(name), validateAddress(address)];
+  if (email) checks.splice(1, 0, validateEmail(email));
+  const failed = checks.find((c) => !c.valid);
+  return failed || { valid: true };
+}
