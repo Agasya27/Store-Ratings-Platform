@@ -66,9 +66,17 @@ function validateStoreName(name) {
   return { valid: true };
 }
 
-function validateStoreBody({ name, email, address }) {
-  const checks = [validateStoreName(name), validateAddress(address)];
-  if (email) checks.splice(1, 0, validateEmail(email));
+function validateOwnerId(ownerId) {
+  const num = Number(ownerId);
+  if (!Number.isInteger(num) || num < 1) {
+    return { valid: false, error: 'A store owner is required.' };
+  }
+  return { valid: true };
+}
+
+function validateStoreBody({ name, email, address, ownerId }) {
+  const checks = [validateStoreName(name), validateOwnerId(ownerId), validateAddress(address)];
+  if (email) checks.splice(2, 0, validateEmail(email));
   const failed = checks.find((c) => !c.valid);
   return failed || { valid: true };
 }
@@ -105,6 +113,7 @@ module.exports = {
   validateLoginBody,
   validateChangePasswordBody,
   validateStoreName,
+  validateOwnerId,
   validateStoreBody,
   validateAdminUserBody,
   validateRatingValue,

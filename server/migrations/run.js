@@ -15,10 +15,13 @@ async function run() {
     console.log('Schema applied successfully.');
   } catch (err) {
     console.error('Migration failed:', err.message);
-    process.exitCode = 1;
+    throw err;
   } finally {
     await pool.end();
   }
 }
 
-run();
+run().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

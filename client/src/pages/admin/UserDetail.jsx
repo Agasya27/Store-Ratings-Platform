@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PageHeader, PageShell } from '../../components/admin/AdminLayout';
 import Badge from '../../components/ui/Badge';
+import Banner from '../../components/ui/Banner';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ErrorState from '../../components/ui/ErrorState';
 import { CardGridSkeleton } from '../../components/ui/Skeleton';
-import { getUser } from '../../api/admin';
+import { deleteUser, getUser } from '../../api/admin';
 import { getApiError } from '../../utils/apiError';
+import { useAuth } from '../../context/AuthContext';
 
 export default function UserDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState('');
+  const [banner, setBanner] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -32,6 +38,31 @@ export default function UserDetail() {
     load();
   }, [id]);
 
+  const canDelete =
+    detail &&
+    detail.user.id !== currentUser?.id &&
+    detail.user.role !== 'ADMIN';
+
+  async function handleDelete() {
+    if (!detail) return;
+    const confirmed = window.confirm(
+      `Delete "${detail.user.name}"? Their ratings will be removed. Owned stores will lose their owner assignment.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setBanner(null);
+    try {
+      await deleteUser(detail.user.id);
+      navigate('/admin/users', {
+        state: { banner: { variant: 'success', message: `"${detail.user.name}" was deleted.` } },
+      });
+    } catch (err) {
+      setBanner({ variant: 'error', message: getApiError(err) });
+      setDeleting(false);
+    }
+  }
+
   return (
     <PageShell>
       <PageHeader
@@ -39,14 +70,29 @@ export default function UserDetail() {
         title="User detail"
         subtitle={`Profile for user #${id}`}
         action={
-          <Link to="/admin/users">
-            <Button type="button" variant="secondary">← Back to users</Button>
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {canDelete && (
+              <Button type="button" variant="danger" loading={deleting} disabled={deleting} onClick={handleDelete}>
+                Delete user
+              </Button>
+            )}
+            <Link to="/admin/users">
+              <Button type="button" variant="secondary">← Back to users</Button>
+            </Link>
+          </div>
         }
       />
 
       {loading && <CardGridSkeleton count={2} />}
       {error && !loading && <ErrorState message={error} onRetry={load} />}
+
+      {banner && !loading && (
+        <div className="mb-6">
+          <Banner variant={banner.variant} onDismiss={() => setBanner(null)}>
+            {banner.message}
+          </Banner>
+        </div>
+      )}
 
       {detail && !loading && (
         <div className="grid gap-6 lg:grid-cols-2">

@@ -15,11 +15,13 @@ import { Table, TableBody, TableCell, TableData, TableHead, TableRow } from '../
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { useSort } from '../../hooks/useSort';
 import { useValidatedFields } from '../../hooks/useValidatedFields';
-import { createUser, listUsers } from '../../api/admin';
+import { createUser, deleteUser, listUsers } from '../../api/admin';
 import { getApiError } from '../../utils/apiError';
+import { useAuth } from '../../context/AuthContext';
 import { validateAddress, validateEmail, validateName, validatePassword, validateAdminUserBody } from '../../utils/validators';
 
 export default function AdminUsers() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [filters, setFilters] = useState({ name: '', email: '', address: '', role: '' });
   const { sortBy, sortOrder, toggleSort } = useSort('name', 'asc');
@@ -34,7 +36,9 @@ export default function AdminUsers() {
   );
   const [listError, setListError] = useState('');
   const [banner, setBanner] = useState(null);
+  const [listBanner, setListBanner] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   async function loadUsers() {
@@ -76,12 +80,37 @@ export default function AdminUsers() {
     }
   }
 
+  function canDeleteUser(user) {
+    if (user.id === currentUser?.id) return false;
+    if (user.role === 'ADMIN') return false;
+    return true;
+  }
+
+  async function handleDelete(user) {
+    const confirmed = window.confirm(
+      `Delete "${user.name}"? Their ratings will be removed. Owned stores will lose their owner assignment.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(user.id);
+    setListBanner(null);
+    try {
+      await deleteUser(user.id);
+      setListBanner({ variant: 'success', message: `"${user.name}" was deleted.` });
+      await loadUsers();
+    } catch (err) {
+      setListBanner({ variant: 'error', message: getApiError(err) });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <PageShell>
       <PageHeader
         section="Admin"
         title="Users"
-        subtitle="Create and manage users. List defaults to normal and admin — filter by OWNER for store owners."
+        subtitle="Create and manage users. Assigning a store owner promotes NORMAL users to OWNER."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -145,7 +174,7 @@ export default function AdminUsers() {
             <Input label="Email" value={filters.email} onChange={(e) => setFilters((f) => ({ ...f, email: e.target.value }))} />
             <Input label="Address" value={filters.address} onChange={(e) => setFilters((f) => ({ ...f, address: e.target.value }))} />
             <Select label="Role" value={filters.role} onChange={(e) => setFilters((f) => ({ ...f, role: e.target.value }))}>
-              <option value="">Normal & admin</option>
+              <option value="">All roles</option>
               <option value="ADMIN">ADMIN</option>
               <option value="NORMAL">NORMAL</option>
               <option value="OWNER">OWNER</option>
@@ -158,6 +187,13 @@ export default function AdminUsers() {
       </div>
 
       <Card className="mt-6">
+        {listBanner && (
+          <div className="mb-4">
+            <Banner variant={listBanner.variant} onDismiss={() => setListBanner(null)}>
+              {listBanner.message}
+            </Banner>
+          </div>
+        )}
         {listError && <ErrorState message={listError} onRetry={loadUsers} />}
         {!listError && loading && <TableSkeleton rows={6} cols={5} />}
         {!listError && !loading && users.length === 0 && (
@@ -190,9 +226,23 @@ export default function AdminUsers() {
                   <TableData><Badge role={user.role} /></TableData>
                   <TableData>{user.address || '—'}</TableData>
                   <TableData>
-                    <Link to={`/admin/users/${user.id}`} className="text-sm font-medium text-brand hover:text-brand-hover">
-                      View
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Link to={`/admin/users/${user.id}`} className="text-sm font-medium text-brand hover:text-brand-hover">
+                        View
+                      </Link>
+                      {canDeleteUser(user) && (
+                        <Button
+                          type="button"
+                          variant="danger"
+                          className="h-8 px-3"
+                          loading={deletingId === user.id}
+                          disabled={deletingId !== null}
+                          onClick={() => handleDelete(user)}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </TableData>
                 </TableRow>
               ))}

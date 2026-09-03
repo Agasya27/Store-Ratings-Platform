@@ -37,6 +37,10 @@ async function updateRole(id, role) {
   await query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
 }
 
+async function deleteById(id) {
+  await query('DELETE FROM users WHERE id = $1', [id]);
+}
+
 async function countAll() {
   const result = await query('SELECT COUNT(*)::int AS count FROM users');
   return result.rows[0].count;
@@ -61,8 +65,6 @@ async function listUsers(filters = {}, sortOptions = {}, pagination = {}) {
   if (filters.role) {
     params.push(filters.role);
     conditions.push(`role = $${params.length}`);
-  } else {
-    conditions.push(`role IN ('NORMAL', 'ADMIN')`);
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -125,6 +127,7 @@ module.exports = {
   createUser,
   updatePassword,
   updateRole,
+  deleteById,
   countAll,
   listUsers,
   findDetailById,

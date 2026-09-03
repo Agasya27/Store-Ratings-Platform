@@ -149,6 +149,10 @@ async function findByOwnerId(ownerId) {
   return result.rows[0] || null;
 }
 
+async function deleteById(id) {
+  await query('DELETE FROM stores WHERE id = $1', [id]);
+}
+
 module.exports = {
   createStore,
   findById,
@@ -157,4 +161,5 @@ module.exports = {
   listStoresForUser,
   findByIdWithRatings,
   findByOwnerId,
+  deleteById,
 };
