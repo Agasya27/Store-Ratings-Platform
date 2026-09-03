@@ -13,8 +13,8 @@ export default function Select({ className, label, hint, error, id, children, ..
       <select
         id={selectId}
         className={cn(
-          'h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20',
-          error ? 'border-red-400' : 'border-border',
+          'h-11 w-full rounded-lg border bg-surface px-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20',
+          error ? 'border-danger' : 'border-border',
           className
         )}
         {...props}
@@ -22,7 +22,7 @@ export default function Select({ className, label, hint, error, id, children, ..
         {children}
       </select>
       {hint && !error && <p className="text-xs text-muted">{hint}</p>}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

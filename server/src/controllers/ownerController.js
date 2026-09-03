@@ -11,7 +11,8 @@ async function getDashboard(req, res) {
     });
   }
 
-  const raters = await ownerModel.getRatersForOwner(req.user.id);
+  const { sortBy, sortOrder } = req.query;
+  const raters = await ownerModel.getRatersForOwner(req.user.id, { sortBy, sortOrder });
   res.json({ store, raters });
 }
 

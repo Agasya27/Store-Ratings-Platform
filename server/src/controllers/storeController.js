@@ -2,10 +2,11 @@ const AppError = require('../utils/AppError');
 const storeModel = require('../models/storeModel');
 
 async function listStores(req, res) {
-  const { name, address, page, limit } = req.query;
+  const { name, address, sortBy, sortOrder, page, limit } = req.query;
   const result = await storeModel.listStoresForUser(
     { name, address },
     req.user?.id || null,
+    { sortBy, sortOrder },
     { page, limit }
   );
   res.json(result);

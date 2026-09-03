@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminStores from './pages/admin/Stores';
 import AdminUsers from './pages/admin/Users';
+import UserDetail from './pages/admin/UserDetail';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -64,6 +65,15 @@ export default function App() {
             element={
               <RoleRoute roles={['ADMIN']}>
                 <AdminUsers />
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users/:id"
+            element={
+              <RoleRoute roles={['ADMIN']}>
+                <UserDetail />
               </RoleRoute>
             }
           />

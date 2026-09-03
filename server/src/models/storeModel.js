@@ -69,7 +69,9 @@ async function listStoresAdmin(filters = {}, sortOptions = {}, pagination = {}) 
   return { stores: result.rows, total, page, limit };
 }
 
-async function listStoresForUser(filters = {}, userId = null, pagination = {}) {
+const USER_STORE_SORT_COLUMNS = ['name', 'address', 'average_rating', 'created_at'];
+
+async function listStoresForUser(filters = {}, userId = null, sortOptions = {}, pagination = {}) {
   const conditions = [];
   const params = [];
 
@@ -83,6 +85,13 @@ async function listStoresForUser(filters = {}, userId = null, pagination = {}) {
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const { column, order } = parseSort(
+    sortOptions.sortBy,
+    sortOptions.sortOrder,
+    USER_STORE_SORT_COLUMNS,
+    'name'
+  );
+  const sortColumn = column === 'average_rating' ? 'average_rating' : `s.${column}`;
   const { limit, offset, page } = parsePagination(pagination.page, pagination.limit);
 
   const countResult = await query(`SELECT COUNT(*)::int AS count FROM stores s ${where}`, params);
@@ -105,7 +114,7 @@ async function listStoresForUser(filters = {}, userId = null, pagination = {}) {
      LEFT JOIN ratings r ON r.store_id = s.id
      ${where}
      GROUP BY s.id
-     ORDER BY s.name ASC
+     ORDER BY ${sortColumn} ${order}
      LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
     listParams
   );

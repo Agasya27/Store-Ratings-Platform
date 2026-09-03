@@ -1,9 +1,9 @@
 import { cn } from '../../utils/cn';
 
 const styles = {
-  ADMIN: 'bg-slate-900 text-white',
-  NORMAL: 'bg-teal-100 text-teal-800',
-  OWNER: 'bg-amber-100 text-amber-800',
+  ADMIN: 'bg-foreground text-surface',
+  NORMAL: 'bg-brand-subtle text-brand',
+  OWNER: 'bg-accent-subtle text-accent-hover',
 };
 
 export default function Badge({ role }) {
@@ -11,7 +11,7 @@ export default function Badge({ role }) {
     <span
       className={cn(
         'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide',
-        styles[role] || 'bg-slate-100 text-slate-700'
+        styles[role] || 'bg-surface-muted text-muted'
       )}
     >
       {role}

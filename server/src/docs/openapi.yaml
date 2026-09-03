@@ -95,7 +95,7 @@ paths:
   /api/admin/users:
     get:
       tags: [Admin]
-      summary: List users with filter and sort
+      summary: List users with filter and sort (defaults to NORMAL and ADMIN when role omitted)
       security: [{ bearerAuth: [] }]
       parameters:
         - { name: name, in: query, schema: { type: string } }
@@ -181,6 +181,8 @@ paths:
       parameters:
         - { name: name, in: query, schema: { type: string } }
         - { name: address, in: query, schema: { type: string } }
+        - { name: sortBy, in: query, schema: { type: string, enum: [name, address, average_rating, created_at] } }
+        - { name: sortOrder, in: query, schema: { type: string, enum: [asc, desc] } }
         - { name: page, in: query, schema: { type: integer } }
         - { name: limit, in: query, schema: { type: integer } }
       responses:
@@ -238,6 +240,9 @@ paths:
       tags: [Owner]
       summary: Owner dashboard with store average rating and raters
       security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: sortBy, in: query, schema: { type: string, enum: [name, email, rating, created_at] } }
+        - { name: sortOrder, in: query, schema: { type: string, enum: [asc, desc] } }
       responses:
         '200':
           description: Owned store summary and list of users who rated it

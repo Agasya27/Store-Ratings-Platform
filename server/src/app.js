@@ -12,7 +12,16 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(cors());
+const clientOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
+app.use(
+  cors({
+    origin: clientOrigins.length > 0 ? clientOrigins : true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.get('/health', async (_req, res) => {
