@@ -13,4 +13,9 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    // Railway (and other hosts) — vite preview blocks unknown hostnames by default
+    allowedHosts: true,
+  },
 })
