@@ -4,6 +4,10 @@ A full-stack app for the FullStack Intern coding challenge. Users can browse reg
 
 I built the backend with Express and PostgreSQL (plain SQL, no ORM), and the frontend with React and Vite.
 
+Live app: https://store-ratings-client-production.up.railway.app
+API: https://store-ratings-api-production.up.railway.app
+Swagger: https://store-ratings-api-production.up.railway.app/api/docs
+
 ## What's in here
 
 **Admin** — dashboard with user/store/rating counts, create users and stores, filter and sort listings, view individual user profiles (including store rating for owners).
@@ -108,4 +112,4 @@ cd client && npm run format
 
 ## Deploying to Railway
 
-Backend and frontend are meant to run as **two Railway services** plus a **PostgreSQL** database. See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step setup (root directories, env vars, CORS, and `VITE_API_URL`).
+Backend and frontend are meant to run as **two Railway services** plus a **PostgreSQL** database.
