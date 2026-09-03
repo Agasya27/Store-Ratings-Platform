@@ -23,10 +23,13 @@ async function seed() {
     console.log(`Seeded default admin: ${email}`);
   } catch (err) {
     console.error('Seed failed:', err.message);
-    process.exitCode = 1;
+    throw err;
   } finally {
     await pool.end();
   }
 }
 
-seed();
+seed().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

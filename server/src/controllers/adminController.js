@@ -5,6 +5,16 @@ const userModel = require('../models/userModel');
 const storeModel = require('../models/storeModel');
 const ratingModel = require('../models/ratingModel');
 
+async function demoteOwnerIfNoStores(ownerId) {
+  const owner = await userModel.findById(ownerId);
+  if (!owner || owner.role !== 'OWNER') return;
+
+  const remainingStore = await storeModel.findByOwnerId(ownerId);
+  if (!remainingStore) {
+    await userModel.updateRole(ownerId, 'NORMAL');
+  }
+}
+
 async function getDashboard(_req, res) {
   const [users, stores, ratings] = await Promise.all([
     userModel.countAll(),
@@ -32,14 +42,42 @@ async function createStore(req, res) {
   if (!validation.valid) throw new AppError(validation.error, 400);
 
   const { name, email, address, ownerId } = req.body;
-  if (ownerId) {
-    const owner = await userModel.findById(ownerId);
-    if (!owner) throw new AppError('Owner user not found', 404);
-    if (owner.role !== 'OWNER') await userModel.updateRole(ownerId, 'OWNER');
-  }
+  if (!ownerId) throw new AppError('A store owner is required.', 400);
+
+  const owner = await userModel.findById(ownerId);
+  if (!owner) throw new AppError('Owner user not found', 404);
+  if (owner.role !== 'OWNER') await userModel.updateRole(ownerId, 'OWNER');
 
   const store = await storeModel.createStore({ name, email, address, ownerId });
   res.status(201).json({ store });
+}
+
+async function deleteStore(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) throw new AppError('Invalid store id', 400);
+
+  const store = await storeModel.findById(id);
+  if (!store) throw new AppError('Store not found', 404);
+
+  const ownerId = store.owner_id;
+  await storeModel.deleteById(id);
+  if (ownerId) await demoteOwnerIfNoStores(ownerId);
+
+  res.json({ message: 'Store deleted successfully' });
+}
+
+async function deleteUser(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) throw new AppError('Invalid user id', 400);
+
+  if (id === req.user.id) throw new AppError('You cannot delete your own account', 400);
+
+  const user = await userModel.findById(id);
+  if (!user) throw new AppError('User not found', 404);
+  if (user.role === 'ADMIN') throw new AppError('Admin accounts cannot be deleted', 400);
+
+  await userModel.deleteById(id);
+  res.json({ message: 'User deleted successfully' });
 }
 
 async function listUsers(req, res) {
@@ -68,4 +106,13 @@ async function getUserById(req, res) {
   res.json(detail);
 }
 
-module.exports = { getDashboard, createUser, createStore, listUsers, listStores, getUserById };
+module.exports = {
+  getDashboard,
+  createUser,
+  createStore,
+  deleteStore,
+  deleteUser,
+  listUsers,
+  listStores,
+  getUserById,
+};

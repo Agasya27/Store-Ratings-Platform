@@ -95,7 +95,7 @@ paths:
   /api/admin/users:
     get:
       tags: [Admin]
-      summary: List users with filter and sort (defaults to NORMAL and ADMIN when role omitted)
+      summary: List users with filter and sort (all roles when role omitted)
       security: [{ bearerAuth: [] }]
       parameters:
         - { name: name, in: query, schema: { type: string } }
@@ -138,6 +138,16 @@ paths:
       responses:
         '200': { description: User detail }
         '404': { description: Not found }
+    delete:
+      tags: [Admin]
+      summary: Delete a user (NORMAL or OWNER). Ratings are removed; store ownership is cleared.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: User deleted }
+        '400': { description: Cannot delete self or admin }
+        '404': { description: Not found }
 
   /api/admin/stores:
     get:
@@ -164,14 +174,25 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name]
+              required: [name, ownerId]
               properties:
                 name: { type: string }
                 email: { type: string }
                 address: { type: string }
-                ownerId: { type: integer }
+                ownerId: { type: integer, description: Required user id for store owner }
       responses:
         '201': { description: Store created }
+
+  /api/admin/stores/{id}:
+    delete:
+      tags: [Admin]
+      summary: Delete a store, its ratings, and demote owner to NORMAL if they have no other stores
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: Store deleted }
+        '404': { description: Not found }
 
   /api/stores:
     get:

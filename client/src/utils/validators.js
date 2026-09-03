@@ -51,9 +51,17 @@ export function validateStoreName(name) {
   return { valid: true };
 }
 
-export function validateStoreBody({ name, email, address }) {
-  const checks = [validateStoreName(name), validateAddress(address)];
-  if (email) checks.splice(1, 0, validateEmail(email));
+export function validateOwnerId(ownerId) {
+  const num = Number(ownerId);
+  if (!Number.isInteger(num) || num < 1) {
+    return { valid: false, error: 'Please select a store owner.' };
+  }
+  return { valid: true };
+}
+
+export function validateStoreBody({ name, email, address, ownerId }) {
+  const checks = [validateStoreName(name), validateOwnerId(ownerId), validateAddress(address)];
+  if (email) checks.splice(2, 0, validateEmail(email));
   const failed = checks.find((c) => !c.valid);
   return failed || { valid: true };
 }
