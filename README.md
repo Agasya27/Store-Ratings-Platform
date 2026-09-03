@@ -5,7 +5,7 @@ A full-stack app for the FullStack Intern coding challenge. Users can browse reg
 I built the backend with Express and PostgreSQL (plain SQL, no ORM), and the frontend with React and Vite.
 
 Live app: https://store-ratings-client-production.up.railway.app
-API: https://store-ratings-api-production.up.railway.app
+API: https://store-ratings-api-production.up.railway.app/health
 Swagger: https://store-ratings-api-production.up.railway.app/api/docs
 
 ## What's in here
